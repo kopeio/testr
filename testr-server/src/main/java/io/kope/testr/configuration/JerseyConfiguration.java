@@ -3,6 +3,7 @@ package io.kope.testr.configuration;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.context.annotation.Configuration;
 
+import io.kope.graphql.GraphQLEndpoint;
 import io.kope.testr.endpoints.BlobEndpoint;
 import io.kope.testr.endpoints.ExecutionEndpoint;
 import io.kope.testr.endpoints.StepEventsMessageBodyWriter;
@@ -17,7 +18,7 @@ public class JerseyConfiguration extends ResourceConfig {
 		register(BlobEndpoint.class);
 		register(ExecutionEndpoint.class);
 		register(SystemEndpoint.class);
-		// register(GraphqlEndpoint.class);
+		register(GraphQLEndpoint.class);
 
 		register(ProtobufMessageBodyWriter.class);
 		register(ProtobufGeneratedMessageBodyReader.class);
