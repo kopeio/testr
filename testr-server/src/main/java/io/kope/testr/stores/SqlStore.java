@@ -5,12 +5,15 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import io.kope.testr.protobuf.model.Model.Execution;
@@ -31,9 +34,22 @@ public class SqlStore implements ExecutionService, JobService {
 		this.helper = new SqlHelper(ds);
 	}
 
+	final Cache<String, Integer> jobIdCache = CacheBuilder.newBuilder().expireAfterAccess(300, TimeUnit.SECONDS)
+			.build();
+
 	Optional<Integer> findJobId(String jobName) {
-		// TODO: Cache
-		Optional<Integer> id = helper.command("SELECT id FROM job WHERE name=?", jobName).fetchOne();
+		Optional<Integer> id;
+		Integer cached = jobIdCache.getIfPresent(jobName);
+		if (cached == null) {
+			id = helper.command("SELECT id FROM job WHERE name=?", jobName).fetchOne();
+
+			// We only cache positive results
+			if (id.isPresent()) {
+				jobIdCache.put(jobName, id.get());
+			}
+		} else {
+			id = Optional.of(cached);
+		}
 		return id;
 	}
 
