@@ -29,6 +29,6 @@ public class GqlUser implements GraphQLNode {
 	}
 
 	public List<GqlJob> getJobs() {
-		return Lists.transform(dataStore.jobService.listAllJobs(), d -> new GqlJob(d));
+		return Lists.transform(dataStore.jobService.listAllJobs(), d -> new GqlJob(dataStore, d));
 	}
 }

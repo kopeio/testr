@@ -1,6 +1,7 @@
 package io.kope.graphql;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -10,6 +11,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import graphql.Scalars;
@@ -17,6 +20,7 @@ import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLInterfaceType;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLObjectType;
@@ -25,8 +29,6 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLType;
 import graphql.schema.GraphQLTypeReference;
 import graphql.schema.TypeResolver;
-import jersey.repackaged.com.google.common.collect.Lists;
-import jersey.repackaged.com.google.common.collect.Maps;
 
 public class GraphQLMapper implements TypeResolver {
 
@@ -101,7 +103,7 @@ public class GraphQLMapper implements TypeResolver {
 
 		GraphQLObjectType.Builder b = GraphQLObjectType.newObject().name(name);
 
-		for (Method method : clazz.getDeclaredMethods()) {
+		methodLoop: for (Method method : clazz.getDeclaredMethods()) {
 			String methodName = method.getName();
 
 			String fieldName = null;
@@ -116,31 +118,36 @@ public class GraphQLMapper implements TypeResolver {
 
 			fieldName = Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1);
 
-			GraphQLOutputType outputType = null;
-			Class<?> returnType = method.getReturnType();
-			if (String.class.isAssignableFrom(returnType)) {
-				outputType = Scalars.GraphQLString;
-			} else if (Long.class.isAssignableFrom(returnType) || long.class.isAssignableFrom(returnType)) {
-				outputType = Scalars.GraphQLLong;
-			} else if (Integer.class.isAssignableFrom(returnType) || int.class.isAssignableFrom(returnType)) {
-				outputType = Scalars.GraphQLInt;
-			} else if (List.class.isAssignableFrom(returnType)) {
-				Type genericReturnType = method.getGenericReturnType();
-				if (genericReturnType instanceof ParameterizedType) {
-					ParameterizedType parameterizedType = (ParameterizedType) genericReturnType;
-					Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
-					if (actualTypeArguments.length == 1) {
-						Type elementType = actualTypeArguments[0];
-						outputType = new GraphQLList(new GraphQLTypeReference(toGqlName((Class) elementType)));
-					}
-				}
-			} else {
-				outputType = new GraphQLTypeReference(toGqlName(returnType));
+			GraphQLOutputType outputType = (GraphQLOutputType) getGraphQLType(method.getGenericReturnType());
+			if (outputType == null) {
+				log.warn("Unknown return type for method {}: {}", methodName, method.getGenericReturnType());
+				continue;
 			}
 
-			if (outputType == null) {
-				log.warn("Unknown return type for method {}: {}", methodName, returnType);
-				continue;
+			Parameter[] parameters = method.getParameters();
+			String[] parameterNames = new String[parameters.length];
+
+			List<GraphQLArgument> arguments = Lists.newArrayList();
+			if (parameters.length != 0) {
+				for (int i = 0; i < parameters.length; i++) {
+					Parameter parameter = parameters[i];
+
+					Type parameterType = parameter.getParameterizedType();
+					String parameterName = parameter.getName();
+					if (parameterName.equals("arg0")) {
+						throw new IllegalStateException("Parameter names not compiled in");
+					}
+					GraphQLType gqlParameterType = getGraphQLType(parameterType);
+					if (gqlParameterType == null) {
+						log.warn("Unknown parameter type for method arg {}: {}", methodName, parameterType);
+						continue methodLoop;
+					}
+
+					String gqlFieldName = parameterName;
+					parameterNames[i] = gqlFieldName;
+					GraphQLArgument arg = new GraphQLArgument(gqlFieldName, (GraphQLInputType) gqlParameterType);
+					arguments.add(arg);
+				}
 			}
 
 			boolean special = false;
@@ -157,10 +164,14 @@ public class GraphQLMapper implements TypeResolver {
 				GraphQLFieldDefinition.Builder fb = GraphQLFieldDefinition.newFieldDefinition().type(outputType)
 						.name(fieldName);
 
+				if (!arguments.isEmpty()) {
+					fb.argument(arguments);
+				}
+
 				if (root != null) {
-					fb.dataFetcher(RootDataFetcher.build(method, root));
+					fb.dataFetcher(RootDataFetcher.build(method, parameterNames, root));
 				} else {
-					fb.dataFetcher(ReflectionDataFetcher.build(method));
+					fb.dataFetcher(ReflectionDataFetcher.build(method, parameterNames));
 				}
 				b.field(fb.build());
 			}
@@ -170,6 +181,36 @@ public class GraphQLMapper implements TypeResolver {
 			b.withInterface(getNodeInterface());
 		}
 		return b;
+	}
+
+	private GraphQLType getGraphQLType(Type type) {
+		GraphQLType outputType = null;
+		if (type instanceof Class) {
+			Class clazz = (Class) type;
+			if (String.class.isAssignableFrom(clazz)) {
+				outputType = Scalars.GraphQLString;
+			} else if (Long.class.isAssignableFrom(clazz) || long.class.isAssignableFrom(clazz)) {
+				outputType = Scalars.GraphQLLong;
+			} else if (Integer.class.isAssignableFrom(clazz) || int.class.isAssignableFrom(clazz)) {
+				outputType = Scalars.GraphQLInt;
+			} else if (Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz)) {
+				outputType = Scalars.GraphQLBoolean;
+			} else if (Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz)) {
+				outputType = Scalars.GraphQLFloat;
+			} else {
+				outputType = new GraphQLTypeReference(toGqlName(clazz));
+			}
+		} else if (type instanceof ParameterizedType) {
+			ParameterizedType parameterizedType = (ParameterizedType) type;
+			Type[] actualTypeArguments = parameterizedType.getActualTypeArguments();
+			if (actualTypeArguments.length == 1) {
+				if (List.class.isAssignableFrom((Class) parameterizedType.getRawType())) {
+					Type elementType = actualTypeArguments[0];
+					outputType = new GraphQLList(new GraphQLTypeReference(toGqlName((Class) elementType)));
+				}
+			}
+		}
+		return outputType;
 	}
 
 	private String toGqlName(Class<?> clazz) {

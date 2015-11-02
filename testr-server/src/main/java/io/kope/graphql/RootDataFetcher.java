@@ -2,30 +2,24 @@ package io.kope.graphql;
 
 import java.lang.reflect.Method;
 
-import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
-import jersey.repackaged.com.google.common.base.Throwables;
 
-public class RootDataFetcher<T, V> implements DataFetcher {
+public class RootDataFetcher<T, V> extends DataFetcherBase<T, V> {
 
-	final Method method;
 	final T root;
 
-	public RootDataFetcher(Method method, T root) {
-		this.method = method;
+	public RootDataFetcher(Method method, String[] parameterNames, T root) {
+		super(method, parameterNames);
 		this.root = root;
 	}
 
 	@Override
 	public Object get(DataFetchingEnvironment environment) {
-		try {
-			return method.invoke(root);
-		} catch (ReflectiveOperationException e) {
-			throw Throwables.propagate(e);
-		}
+		return get(environment, root);
 	}
 
-	public static <T, V> RootDataFetcher<T, V> build(Method method, T root) {
-		return new RootDataFetcher<>(method, root);
+	public static <T, V> RootDataFetcher<T, V> build(Method method, String[] parameterNames, T root) {
+		return new RootDataFetcher<>(method, parameterNames, root);
 	}
+
 }

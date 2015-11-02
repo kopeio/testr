@@ -180,4 +180,30 @@ public class SqlStore implements ExecutionService, JobService {
 		}
 	}
 
+	@Override
+	public List<ExecutionKey> listExecutions(String jobName) {
+		Optional<Integer> jobId = findJobId(jobName);
+		if (!jobId.isPresent()) {
+			return Collections.emptyList();
+		}
+
+		List<ExecutionKey> executions = helper
+				.command("SELECT revision, timestamp FROM execution WHERE job=? ORDER BY timestamp DESC", jobId.get())
+				.map((ResultSet rs) -> {
+					String revision;
+					long timestamp;
+					try {
+						revision = rs.getString(1);
+						timestamp = rs.getLong(2);
+					} catch (SQLException e) {
+						throw new StoreException("Error reading data store", e);
+					}
+
+					ExecutionKey execution = ExecutionKey.newBuilder().setJob(jobName).setRevision(revision)
+							.setTimestamp(timestamp).build();
+					return execution;
+				});
+		return executions;
+	}
+
 }

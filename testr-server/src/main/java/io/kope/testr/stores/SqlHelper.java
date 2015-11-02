@@ -10,82 +10,90 @@ import java.util.function.Function;
 
 import javax.sql.DataSource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Lists;
 
 public class SqlHelper {
 
-    final DataSource dataSource;
+	private static final Logger log = LoggerFactory.getLogger(SqlHelper.class);
 
-    public SqlHelper(DataSource dataSource) {
-        this.dataSource = dataSource;
-    }
+	final DataSource dataSource;
 
-    public SqlCommand command(String sql, Object... args) {
-        return new SqlCommand(sql, args);
-    }
+	public SqlHelper(DataSource dataSource) {
+		this.dataSource = dataSource;
+	}
 
-    public int executeUpdate(String sql, Object... args) {
-        try (Connection connection = dataSource.getConnection()) {
-            try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                for (int i = 0; i < args.length; i++) {
-                    Object arg = args[i];
-                    ps.setObject(i + 1, arg);
-                }
+	public SqlCommand command(String sql, Object... args) {
+		return new SqlCommand(sql, args);
+	}
 
-                return ps.executeUpdate();
-            }
-        } catch (SQLException e) {
-            throw new StoreException("Error inserting row into data store", e);
-        }
-    }
+	public int executeUpdate(String sql, Object... args) {
+		try (Connection connection = dataSource.getConnection()) {
+			try (PreparedStatement ps = connection.prepareStatement(sql)) {
+				for (int i = 0; i < args.length; i++) {
+					Object arg = args[i];
+					ps.setObject(i + 1, arg);
+				}
 
-    class SqlCommand {
-        final String sql;
-        final Object[] args;
+				log.info("Executing SQL update {}", sql);
 
-        public SqlCommand(String sql, Object[] args) {
-            this.sql = sql;
-            this.args = args;
-        }
+				return ps.executeUpdate();
+			}
+		} catch (SQLException e) {
+			throw new StoreException("Error inserting row into data store", e);
+		}
+	}
 
-        public <T> List<T> map(Function<ResultSet, T> mapper) {
-            List<T> results = Lists.newArrayList();
-            try (Connection connection = dataSource.getConnection()) {
-                try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                    for (int i = 0; i < args.length; i++) {
-                        Object arg = args[i];
-                        ps.setObject(i + 1, arg);
-                    }
+	class SqlCommand {
+		final String sql;
+		final Object[] args;
 
-                    try (ResultSet rs = ps.executeQuery()) {
-                        while (rs.next()) {
-                            T t = mapper.apply(rs);
-                            results.add(t);
-                        }
-                    }
-                }
-            } catch (SQLException e) {
-                throw new StoreException("Error querying data store", e);
-            }
-            return results;
-        }
+		public SqlCommand(String sql, Object[] args) {
+			this.sql = sql;
+			this.args = args;
+		}
 
-        public <T> Optional<T> fetchOne() {
-            List<T> results = map((ResultSet rs) -> {
-                try {
-                    return (T) rs.getObject(1);
-                } catch (SQLException e) {
-                    throw new StoreException("Error reading row", e);
-                }
-            });
-            if (results.size() == 1) {
-                return Optional.of(results.get(0));
-            }
-            if (results.size() == 0) {
-                return Optional.empty();
-            }
-            throw new StoreException("Found multiple rows when expecting one or zero");
-        }
+		public <T> List<T> map(Function<ResultSet, T> mapper) {
+			List<T> results = Lists.newArrayList();
+			try (Connection connection = dataSource.getConnection()) {
+				try (PreparedStatement ps = connection.prepareStatement(sql)) {
+					for (int i = 0; i < args.length; i++) {
+						Object arg = args[i];
+						ps.setObject(i + 1, arg);
+					}
 
-    }
+					log.info("Executing SQL query {}", sql);
+					try (ResultSet rs = ps.executeQuery()) {
+						while (rs.next()) {
+							T t = mapper.apply(rs);
+							results.add(t);
+						}
+					}
+				}
+			} catch (SQLException e) {
+				throw new StoreException("Error querying data store", e);
+			}
+			return results;
+		}
+
+		public <T> Optional<T> fetchOne() {
+			List<T> results = map((ResultSet rs) -> {
+				try {
+					return (T) rs.getObject(1);
+				} catch (SQLException e) {
+					throw new StoreException("Error reading row", e);
+				}
+			});
+			if (results.size() == 1) {
+				return Optional.of(results.get(0));
+			}
+			if (results.size() == 0) {
+				return Optional.empty();
+			}
+			throw new StoreException("Found multiple rows when expecting one or zero");
+		}
+
+	}
 }

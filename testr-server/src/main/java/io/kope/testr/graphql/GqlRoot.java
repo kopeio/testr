@@ -13,4 +13,8 @@ public class GqlRoot {
 		return dataStore.getAnonymousUser();
 	}
 
+	public GqlJob getJob(String id) {
+		return dataStore.getJob(id);
+	}
+
 }

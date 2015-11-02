@@ -41,8 +41,11 @@ public class GraphqlSchemaBuilder implements SchemaBuilder {
 		GraphQLMapper mapper = new GraphQLMapper();
 
 		// TODO: Can we just discover these by traversal from the root
-		GraphQLObjectType jobType = mapper.addByReflection(GqlJob.class);
-		GraphQLObjectType userType = mapper.addByReflection(GqlUser.class);
+		mapper.addByReflection(GqlJob.class);
+		mapper.addByReflection(GqlUser.class);
+		mapper.addByReflection(GqlExecution.class);
+		mapper.addByReflection(GqlArtifact.class);
+		mapper.addByReflection(GqlStepEvent.class);
 
 		GraphQLObjectType queryType = mapper.addRootByReflection(dataStore, gqlRoot);
 		mapper.setQueryType(queryType);

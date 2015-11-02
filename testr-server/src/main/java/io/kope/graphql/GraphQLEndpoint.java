@@ -59,7 +59,7 @@ public class GraphQLEndpoint {
 		Map<String, Object> wrapped = Maps.newHashMap();
 		wrapped.put("data", result);
 
-		String json = MAPPER.writeValueAsString(wrapped);
+		String json = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(wrapped);
 
 		log.info("response {}", json);
 

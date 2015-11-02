@@ -13,12 +13,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Throwables;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.Message;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Parser;
-
-import jersey.repackaged.com.google.common.base.Throwables;
 
 public class ProtobufGeneratedMessageBodyReader implements MessageBodyReader<GeneratedMessage> {
 

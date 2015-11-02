@@ -16,6 +16,8 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Lists;
+
 import io.kope.testr.protobuf.auth.Auth.AuthPermission;
 import io.kope.testr.protobuf.model.Model.Execution;
 import io.kope.testr.protobuf.model.Model.ExecutionKey;
@@ -24,7 +26,6 @@ import io.kope.testr.protobuf.model.Model.StepEvent;
 import io.kope.testr.services.BlobService;
 import io.kope.testr.services.ExecutionService;
 import io.kope.testr.services.JobService;
-import jersey.repackaged.com.google.common.collect.Lists;
 
 @Path("/api/execution")
 public class ExecutionEndpoint extends EndpointBase {

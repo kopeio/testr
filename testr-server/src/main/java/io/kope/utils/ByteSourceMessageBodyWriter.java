@@ -10,9 +10,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 
+import com.google.common.base.Throwables;
 import com.google.common.io.ByteSource;
-
-import jersey.repackaged.com.google.common.base.Throwables;
 
 public class ByteSourceMessageBodyWriter implements MessageBodyWriter<ByteSource> {
 
