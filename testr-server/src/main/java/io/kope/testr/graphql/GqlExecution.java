@@ -2,6 +2,9 @@ package io.kope.testr.graphql;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.common.collect.Lists;
 
 import io.kope.graphql.GqlName;
@@ -11,6 +14,8 @@ import io.kope.testr.protobuf.model.Model.ExecutionKey;
 
 @GqlName("Execution")
 public class GqlExecution implements GraphQLNode {
+
+	private static final Logger log = LoggerFactory.getLogger(GqlExecution.class);
 
 	final GqlDataStore dataStore;
 	Execution data;
@@ -62,5 +67,23 @@ public class GqlExecution implements GraphQLNode {
 
 	public List<GqlStepEvent> getLog() {
 		return dataStore.getLog(key);
+	}
+
+	public String getGithubUrl() {
+		String jobName = key.getJob();
+		GqlJob job = dataStore.getJob(jobName);
+		if (job == null) {
+			log.warn("Job not found {}", jobName);
+			return null;
+		}
+		String repo = job.data.getRepo();
+
+		// TODO: Convert git:// / .git suffix etc
+		String url = repo;
+		if (!url.endsWith("/")) {
+			url += "/";
+		}
+		url += "commit/" + key.getRevision();
+		return url;
 	}
 }
