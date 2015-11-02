@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package model;
+option java_package = "io.kope.testr.protobuf.model";
+
+message ExecutionKey {
+  string job = 1;
+  int64 timestamp = 2;
+  string revision = 3;
+}
+
+message Execution {
+  ExecutionKey key = 1;
+  bool success = 3;
+  int64 start_time = 4;
+  int64 end_time = 5;
+  repeated Artifact artifacts = 6;
+  ErrorInfo error = 7;
+}
+
+message Artifact {
+  string relative_path = 1;
+  int64 size = 2;
+}
+
+message ErrorInfo {
+  string error_type = 1;
+  string message = 2;
+}
+
+message JobData {
+  string job = 1;
+  string repo = 2;
+  Step plan = 3;
+  repeated string branches = 4;
+  bool is_public = 5;
+}
+
+message Step {
+  int32 id = 1;
+  ScriptStep script_step = 2;
+  FetchCodeStep fetch_code_step = 3;
+  MultiStep multi_step = 4;
+}
+
+message MultiStep {
+  repeated Step steps = 1;
+}
+
+message ScriptStep {
+  string script = 1;
+}
+
+message FetchCodeStep {
+  string url = 1;
+  string branch = 2;
+  string revision = 3;
+}
+
+message StepEvent {
+  int32 step_id = 1;
+  int64 timestamp_delta = 2;
+  StartStepEvent start_step_event = 3;
+  OutputEvent output_event = 4;
+  EndStepEvent end_step_event = 5;
+  StepEventError error = 6;
+  StartCommandEvent start_command_event = 7;
+  EndCommandEvent end_command_event = 8;
+  int64 timestamp_absolute = 100;
+}
+
+message StepEventError {
+  string text = 1;
+  string type = 2;
+}
+
+message StartStepEvent {
+  Step step = 1;
+}
+
+message EndStepEvent {
+  bool success = 1;
+}
+
+
+enum OutputType {
+  UNKNOWN = 0;
+  STDOUT = 1;
+  STDERR = 2;
+}
+
+message OutputEvent {
+  OutputType output_type = 1;
+  string message = 2;
+}
+
+message StartCommandEvent {
+  string description = 1;
+  repeated string command = 2;
+}
+
+message EndCommandEvent {
+  int32 ExitCode = 1;
+}

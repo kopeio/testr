@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package server;
+option java_package = "io.kope.testr.protobuf.auth";
+
+message AuthenticationTokenData {
+  TokenType token_type = 1;
+  string job = 2;
+  string revision = 3;
+  int64 timestamp = 4;
+}
+
+message SignedToken {
+  bytes data = 1;
+  int32 key_id = 2;
+  bytes signature = 3;
+}
+
+enum AuthPermission {
+  READ = 0;
+  CREATE = 1;
+}
+
+enum TokenType {
+  USER = 0;
+  EXECUTOR = 1;
+}
