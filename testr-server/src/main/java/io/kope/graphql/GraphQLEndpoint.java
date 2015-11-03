@@ -61,7 +61,7 @@ public class GraphQLEndpoint {
 
 		String json = MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(wrapped);
 
-		log.info("response {}", json);
+		// log.info("response {}", json);
 
 		return Response.ok(json).build();
 	}
