@@ -1,6 +1,3 @@
 [submodule "vendor/graphql-java"]
 	path = vendor/graphql-java
 	url = https://github.com/andimarek/graphql-java.git
-[submodule "vendor/keyczar"]
-	path = vendor/keyczar
-	url = https://github.com/google/keyczar.git

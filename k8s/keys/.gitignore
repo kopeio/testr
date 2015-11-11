@@ -1,0 +1,5 @@
+# *.pubkey is not a secret, but not useful without the .pem file
+*.pubkey
+*.pem
+*.yaml
+*.json

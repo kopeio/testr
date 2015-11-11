@@ -30,7 +30,7 @@ public class JobManager implements InitializingBean {
     @Inject
     ExecutionService executionStore;
     @Inject
-    Executor executor;
+    JobExecutor executor;
     @Inject
     Authenticator authenticator;
 

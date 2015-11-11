@@ -37,7 +37,7 @@ public class S3StoreHelper {
 
 	public PutObjectResult uploadStreamToS3(String relativeKey, InputStream is) throws IOException {
 		String key = keyPrefix + "/" + relativeKey;
-		log.info("Uploading to s3:{}", key);
+		log.info("Uploading to s3://{}/{}", bucket, key);
 
 		try (TempFile tempFile = TempFile.create("s3upload", "")) {
 			tempFile.asByteSink().writeFrom(is);

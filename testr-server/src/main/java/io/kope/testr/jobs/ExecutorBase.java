@@ -7,8 +7,8 @@ import io.kope.testr.protobuf.model.Model.ExecutionKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class ExecutorBase implements Executor {
-    private static final Logger log = LoggerFactory.getLogger(Executor.class);
+public abstract class ExecutorBase implements JobExecutor {
+    private static final Logger log = LoggerFactory.getLogger(JobExecutor.class);
 
     final JobManager manager;
 

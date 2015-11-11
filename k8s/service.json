@@ -1,0 +1,23 @@
+{
+  "kind":"Service",
+  "apiVersion":"v1",
+  "metadata":{
+    "name":"testr",
+    "labels":{
+      "name":"testr"
+    }
+  },
+  "spec":{
+    "createExternalLoadBalancer": false,
+    "ports": [
+      {
+        "port":80,
+        "targetPort":"http",
+        "protocol":"TCP"
+      }
+    ],
+    "selector":{
+      "name":"testr"
+    }
+  }
+}

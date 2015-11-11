@@ -1,0 +1,59 @@
+{
+  "kind":"ReplicationController",
+  "apiVersion":"v1",
+  "metadata":{
+    "name":"testr-postgres",
+    "labels":{
+      "name":"testr-postgres"
+    }
+  },
+  "spec":{
+    "replicas":1,
+    "selector":{
+      "name":"testr-postgres"
+    },
+    "template":{
+      "metadata":{
+        "labels":{
+          "name":"testr-postgres",
+	      "kope.io/clusterid": "testr-postgres",
+	      "db.kope.io/database": "testr"
+        }
+      },
+      "spec":{
+        "volumes": [
+          {
+            "name": "data",
+            "persistentVolumeClaim": {
+              "claimName": "testr-postgres"
+            }
+          }
+        ],
+        "containers":[
+          {
+            "image":"kope/postgres:latest",
+            "name":"testr-postgres",
+            "ports":[
+              {
+                "name":"postgres",
+                "containerPort":5432,
+                "protocol":"TCP"
+              }
+            ],
+            "volumeMounts": [
+              {
+                "name": "data",
+                "mountPath": "/data"
+              }
+            ],
+            "resources": {
+              "limits": {
+                "memory": "128Mi"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "kind": "PersistentVolume",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "testr-postgres",
+    "labels": {
+      "name": "testr-postgres"
+    }
+  },
+  "spec": {
+    "capacity": {
+      "storage": "50Gi"
+    },
+    "accessModes": ["ReadWriteOnce"],
+    "awsElasticBlockStore": {
+      "volumeID": "vol-fbdfe90f",
+      "fsType": "ext4"
+    }
+  }
+}

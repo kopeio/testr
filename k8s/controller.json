@@ -1,0 +1,43 @@
+{
+  "kind":"ReplicationController",
+  "apiVersion":"v1",
+  "metadata":{
+    "name":"testr",
+    "labels":{
+      "name":"testr"
+    }
+  },
+  "spec":{
+    "replicas":1,
+    "selector":{
+      "name":"testr"
+    },
+    "template":{
+      "metadata":{
+        "labels":{
+          "name":"testr"
+        }
+      },
+      "spec":{
+        "containers":[
+          {
+            "image":"kopeio/testr:latest",
+            "name":"testr",
+            "ports":[
+              {
+                "name":"http",
+                "containerPort":8080,
+                "protocol":"TCP"
+              }
+            ],
+            "resources": {
+              "limits": {
+                "memory": "1024Mi"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
